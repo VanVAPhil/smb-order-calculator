@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Calculator</title>
+<style>
+  :root{
+    --ink:#1c2b24;
+    --paper:#f7f5ef;
+    --line:#d8d2c2;
+    --line-strong:#1c2b24;
+    --accent:#5c7a5e;
+    --accent-deep:#3c5940;
+    --danger:#a3452f;
+    --highlight:#fff6d8;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:900px;
+    margin:0 auto;
+    padding:32px 20px 80px;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:3px solid var(--line-strong);
+    padding-bottom:14px;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  header .brand-eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent-deep);
+    margin:0 0 4px;
+  }
+  header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  header .meta{
+    font-family:var(--mono);
+    font-size:12px;
+    color:#5a5648;
+    text-align:right;
+  }
+  header .meta input{
+    font-family:var(--mono);
+    font-size:12px;
+    border:none;
+    background:transparent;
+    border-bottom:1px dashed var(--line);
+    text-align:right;
+    color:var(--ink);
+    width:150px;
+    padding:2px 0;
+  }
+  .panel{
+    background:#fff;
+    border:1px solid var(--line);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  thead th{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    text-align:right;
+    padding:10px 12px;
+    border-bottom:2px solid var(--line-strong);
+    color:var(--accent-deep);
+    background:#eef0e6;
+  }
+  thead th:first-child{ text-align:left; }
+  thead th.qty-col{ background:#e2ecdf; }
+  tbody td{
+    padding:8px 12px;
+    border-bottom:1px solid var(--line);
+    text-align:right;
+    font-family:var(--mono);
+    font-size:14px;
+    vertical-align:middle;
+  }
+  tbody td:first-child{ text-align:left; font-family:var(--sans); font-weight:600; }
+  tbody tr:hover{ background:#fbfaf5; }
+  input[type=text], input[type=number]{
+    font-family:var(--mono);
+    font-size:14px;
+    border:1px solid transparent;
+    background:transparent;
+    text-align:right;
+    width:100%;
+    padding:4px 6px;
+    border-radius:2px;
+    color:var(--ink);
+  }
+  tbody td:first-child input{ text-align:left; font-family:var(--sans); font-weight:600;}
+  input[type=text]:hover, input[type=number]:hover{ border-color:var(--line); }
+  input[type=text]:focus, input[type=number]:focus{
+    outline:none;
+    border-color:var(--accent);
+    background:#fff;
+  }
+  .qty-cell{ background:#f1f4ec; }
+  .row-total{ font-weight:700; }
+  .remove-btn{
+    background:none;
+    border:none;
+    color:#b0a998;
+    cursor:pointer;
+    font-size:16px;
+    line-height:1;
+    padding:2px 6px;
+  }
+  .remove-btn:hover{ color:var(--danger); }
+  tfoot td{
+    padding:10px 12px;
+  }
+  .add-row-bar{
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    background:#fbfaf5;
+  }
+  .add-row-bar button{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.04em;
+    background:none;
+    border:1px dashed var(--accent);
+    color:var(--accent-deep);
+    padding:6px 12px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .add-row-bar button:hover{ background:var(--accent); color:#fff; border-style:solid; }
+
+  .summary{
+    margin-top:0;
+    border-top:none;
+  }
+  .summary-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:9px 16px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:14px;
+  }
+  .summary-row .label{
+    color:#4a473c;
+  }
+  .summary-row.subtotal{
+    font-weight:700;
+    background:#eef0e6;
+  }
+  .summary-row .val{
+    font-weight:600;
+  }
+  .summary-row input[type=number]{
+    max-width:140px;
+    font-weight:600;
+  }
+  .summary-row.editable .val-wrap{
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .summary-row .sign{
+    font-family:var(--mono);
+    color:var(--accent-deep);
+    width:14px;
+    display:inline-block;
+    text-align:center;
+  }
+  .summary-row.grand{
+    background:var(--ink);
+    color:var(--highlight);
+    font-size:17px;
+    font-weight:700;
+    padding:16px;
+    border-bottom:none;
+  }
+  .summary-row.grand .label{ color:var(--highlight); letter-spacing:.04em; text-transform:uppercase; font-size:13px;}
+  .toggle-note{
+    font-family:var(--mono);
+    font-size:10px;
+    color:#8b8570;
+    padding:8px 16px 14px;
+  }
+  footer.pagefoot{
+    text-align:center;
+    font-family:var(--mono);
+    font-size:11px;
+    color:#a39c85;
+    margin-top:22px;
+  }
+  @media (max-width:640px){
+    thead th, tbody td{ padding:6px 6px; font-size:12.5px;}
+    header h1{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="brand-eyebrow">Order Sheet</p>
+      <h1>Order Calculator</h1>
+    </div>
+    <div class="meta">
+      <div>Client: <input type="text" id="clientName" placeholder="—"></div>
+      <div style="margin-top:4px;">Date: <input type="text" id="orderDate" placeholder="—"></div>
+    </div>
+  </header>
+
+  <div class="panel">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="qty-col">Quantity</th>
+          <th>Unit Cost (Php)</th>
+          <th>Total Cost (Php)</th>
+          <th style="width:30px;"></th>
+        </tr>
+      </thead>
+      <tbody id="productRows"></tbody>
+    </table>
+    <div class="add-row-bar">
+      <button id="addRowBtn" type="button">+ Add product</button>
+    </div>
+  </div>
+
+  <div style="height:22px;"></div>
+
+  <div class="panel summary">
+    <div class="summary-row subtotal">
+      <span class="label">Total</span>
+      <span class="val" id="sumTotal">0.00</span>
+    </div>
+
+    <div class="summary-row editable">
+      <span class="label">Discount</span>
+      <div class="val-wrap">
+        <span class="sign">−</span>
+        <input type="number" id="discount" value="0" step="any">
+      </div>
+    </div>
+    <div class="summary-row">
+      <span class="label">Total after discount</span>
+      <span class="val" id="sumAfterDiscount">0.00</span>
+    </div>
+
+    <div class="summary-row editable">
+      <span class="label">Deposit</span>
+      <div class="val-wrap">
+        <span class="sign">+</span>
+        <input type="number" id="deposit" value="0" step="any">
+      </div>
+    </div>
+    <div class="summary-row">
+      <span class="label">Total after deposit</span>
+      <span class="val" id="sumAfterDeposit">0.00</span>
+    </div>
+
+    <div class="summary-row editable">
+      <span class="label">Refund</span>
+      <div class="val-wrap">
+        <span class="sign">−</span>
+        <input type="number" id="refund" value="0" step="any">
+      </div>
+    </div>
+    <div class="summary-row">
+      <span class="label">Total after refund</span>
+      <span class="val" id="sumAfterRefund">0.00</span>
+    </div>
+
+    <div class="summary-row editable">
+      <span class="label">Additional</span>
+      <div class="val-wrap">
+        <span class="sign">+</span>
+        <input type="number" id="additional" value="0" step="any">
+      </div>
+    </div>
+
+    <div class="summary-row editable">
+      <span class="label">COL</span>
+      <div class="val-wrap">
+        <span class="sign">+</span>
+        <input type="number" id="col" value="0" step="any">
+      </div>
+    </div>
+
+    <div class="summary-row grand">
+      <span class="label">Total</span>
+      <span class="val" id="grandTotal">₱0.00</span>
+    </div>
+    <div class="toggle-note">Formula: Total − Discount + Deposit − Refund + Additional + COL = Total. Edit any quantity, unit cost, discount, deposit, refund, additional or COL — everything recalculates automatically.</div>
+  </div>
+
+  <footer class="pagefoot">Auto-computing order sheet · values in Php</footer>
+</div>
+
+<script>
+  // Seed products from the reference sheet
+  const seedProducts = [
+    { name: "PP",       qty: 20,  cost: 912  },
+    { name: "PPL",      qty: 10,  cost: 622  },
+    { name: "SMLB",     qty: 35,  cost: 1050 },
+    { name: "SMA",      qty: 15,  cost: 872  },
+    { name: "RHL",      qty: 55,  cost: 650  },
+    { name: "RH500",    qty: 150, cost: 670  },
+    { name: "STA",      qty: 15,  cost: 973  },
+    { name: "RH SUPER", qty: 0,   cost: 700  }
+  ];
+
+  const rowsEl = document.getElementById('productRows');
+
+  function fmt(n){
+    if (isNaN(n)) n = 0;
+    return n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function makeRow(p){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" class="p-name" value="${p.name}" placeholder="Product name"></td>
+      <td class="qty-cell"><input type="number" class="p-qty" value="${p.qty}" step="any"></td>
+      <td><input type="number" class="p-cost" value="${p.cost}" step="any"></td>
+      <td class="row-total p-line-total">0.00</td>
+      <td><button type="button" class="remove-btn" title="Remove row">✕</button></td>
+    `;
+    tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', recompute));
+    tr.querySelector('.remove-btn').addEventListener('click', () => { tr.remove(); recompute(); });
+    return tr;
+  }
+
+  seedProducts.forEach(p => rowsEl.appendChild(makeRow(p)));
+
+  document.getElementById('addRowBtn').addEventListener('click', () => {
+    rowsEl.appendChild(makeRow({ name: "", qty: 0, cost: 0 }));
+    recompute();
+  });
+
+  function num(el){
+    const v = parseFloat(el.value);
+    return isNaN(v) ? 0 : v;
+  }
+
+  function recompute(){
+    let total = 0;
+    rowsEl.querySelectorAll('tr').forEach(tr => {
+      const qty = num(tr.querySelector('.p-qty'));
+      const cost = num(tr.querySelector('.p-cost'));
+      const lineTotal = qty * cost;
+      tr.querySelector('.p-line-total').textContent = fmt(lineTotal);
+      total += lineTotal;
+    });
+
+    const discount = num(document.getElementById('discount'));
+    const deposit = num(document.getElementById('deposit'));
+    const refund = num(document.getElementById('refund'));
+    const additional = num(document.getElementById('additional'));
+    const col = num(document.getElementById('col'));
+
+    const afterDiscount = total - discount;
+    const afterDeposit = afterDiscount + deposit;
+    const afterRefund = afterDeposit - refund;
+    const grand = afterRefund + additional + col;
+
+    document.getElementById('sumTotal').textContent = fmt(total);
+    document.getElementById('sumAfterDiscount').textContent = fmt(afterDiscount);
+    document.getElementById('sumAfterDeposit').textContent = fmt(afterDeposit);
+    document.getElementById('sumAfterRefund').textContent = fmt(afterRefund);
+    document.getElementById('grandTotal').textContent = '₱' + fmt(grand);
+  }
+
+  ['discount','deposit','refund','additional','col'].forEach(id => {
+    document.getElementById(id).addEventListener('input', recompute);
+  });
+
+  recompute();
+</script>
+
+</body>
+</html>
